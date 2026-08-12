@@ -254,6 +254,42 @@
       line-height: 1.6;
     }
 
+    /* 결과 위에 표시되는 급여 요약 줄 */
+    .result-salary {
+      font-size: 14px;
+      color: #475467;
+      margin: 0 0 14px 0;
+    }
+
+    /* ===== 결과 하단 인쇄/저장 버튼 ===== */
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .result-actions button {
+      flex: 1;
+      padding: 11px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      background-color: #fff;
+      color: #344054;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result-actions button:hover {
+      background-color: #f8fafc;
+    }
+
+    /* ===== 인쇄 화면 (입력/설정/버튼은 숨기고 결과만) ===== */
+    @media print {
+      body { background-color: #fff; padding: 0; }
+      .container { box-shadow: none; max-width: 100%; border-radius: 0; padding: 0; }
+      .subtitle, .input-group, .settings, .calc-button, .result-actions { display: none !important; }
+      .result-area { margin-top: 0; padding-top: 0; border-top: none; }
+    }
+
     /* ===== 모바일 화면 최적화 (폭 480px 이하) ===== */
     @media (max-width: 480px) {
       body {
@@ -347,6 +383,12 @@
     <!-- 결과가 표시될 영역 (지금은 비어 있음) -->
     <div class="result-area" id="resultArea">
       급여를 입력하고 <b>계산하기</b> 버튼을 눌러주세요.
+    </div>
+
+    <!-- 결과 인쇄 / 이미지 저장 버튼 (계산 후에만 표시) -->
+    <div class="result-actions" id="resultActions" style="display: none;">
+      <button type="button" id="printButton">🖨️ 인쇄하기</button>
+      <button type="button" id="saveImageButton">🖼️ 이미지로 저장</button>
     </div>
 
     <!-- 면책 안내 -->
@@ -448,10 +490,16 @@
     // =====================================================
     // 화면 요소 연결
     // =====================================================
-    var salaryInput = document.getElementById("salary");
-    var calcButton  = document.getElementById("calcButton");
-    var resultArea  = document.getElementById("resultArea");
-    var resetButton = document.getElementById("resetRates");
+    var salaryInput   = document.getElementById("salary");
+    var calcButton    = document.getElementById("calcButton");
+    var resultArea    = document.getElementById("resultArea");
+    var resetButton   = document.getElementById("resetRates");
+    var resultActions = document.getElementById("resultActions");
+    var printButton   = document.getElementById("printButton");
+    var saveImageBtn  = document.getElementById("saveImageButton");
+
+    // 마지막 계산 결과 (이미지 저장 시 사용)
+    var lastResult = null;
 
     // 요율 입력칸 id 매핑 (RATES 키 → input id 접두사)
     var RATE_IDS = {
@@ -505,6 +553,10 @@
     // 계산하기 버튼 클릭
     calcButton.addEventListener("click", runCalculation);
 
+    // 인쇄 / 이미지 저장 버튼
+    printButton.addEventListener("click", function () { window.print(); });
+    saveImageBtn.addEventListener("click", saveResultAsImage);
+
     // 실제 계산 실행
     function runCalculation() {
       var salary = parseMoney(salaryInput.value);
@@ -513,12 +565,16 @@
         resultArea.style.color = "#888";
         resultArea.style.textAlign = "center";
         resultArea.innerHTML = "먼저 월 급여를 입력해 주세요.";
+        resultActions.style.display = "none";   // 결과 없으면 버튼 숨김
+        lastResult = null;
         return;
       }
 
       readRateInputs();               // 요율 패널의 최신 값 반영
       var result = calculate(salary);
+      lastResult = result;            // 이미지 저장용으로 보관
       renderResult(result);
+      resultActions.style.display = "flex";      // 계산 후 버튼 표시
 
       // 콘솔에도 상세 결과 출력 (검증용)
       console.log("계산 결과:", result);
@@ -543,6 +599,8 @@
       }
 
       var html =
+        '<p class="result-salary">월 급여 <b>' + withCommas(result.salary) +
+          "</b>원 기준 · 2026년</p>" +
         '<table class="result-table">' +
           "<thead><tr>" +
             "<th>항목</th><th>근로자 부담</th><th>회사 부담</th>" +
@@ -580,6 +638,159 @@
       resultArea.style.color = "#222";
       resultArea.style.textAlign = "left";
       resultArea.innerHTML = html;
+    }
+
+    // =====================================================
+    // 결과를 이미지(PNG)로 저장
+    //  - 외부 라이브러리 없이 캔버스에 직접 그려서 저장
+    //    (html2canvas·SVG 방식은 크롬 보안 정책으로 실패할 수 있음)
+    // =====================================================
+    function saveResultAsImage() {
+      if (!lastResult) return;
+      var r = lastResult;
+
+      var scale = 2;        // 선명하게(레티나) 저장
+      var W = 600;          // 이미지 가로(논리 px)
+      var H = 512;          // 이미지 세로(논리 px)
+      var pad = 30;
+      var rowH = 34;
+      var font = '"Malgun Gothic", "맑은 고딕", sans-serif';
+
+      var canvas = document.createElement("canvas");
+      canvas.width = W * scale;
+      canvas.height = H * scale;
+      var ctx = canvas.getContext("2d");
+      ctx.scale(scale, scale);
+      ctx.textBaseline = "middle";
+
+      // 배경 흰색
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, W, H);
+
+      // 가로줄 그리기 도우미
+      function hline(y, color, wdt) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = wdt;
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(W - pad, y);
+        ctx.stroke();
+      }
+      // 둥근 사각형(카드) 그리기 도우미
+      function roundRect(x, y, w, h, rad) {
+        ctx.beginPath();
+        ctx.moveTo(x + rad, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rad);
+        ctx.arcTo(x + w, y + h, x, y + h, rad);
+        ctx.arcTo(x, y + h, x, y, rad);
+        ctx.arcTo(x, y, x + w, y, rad);
+        ctx.closePath();
+      }
+      function card(x, y, w, h, bg, fg, label, value) {
+        ctx.fillStyle = bg;
+        roundRect(x, y, w, h, 10);
+        ctx.fill();
+        ctx.textAlign = "center";
+        ctx.fillStyle = fg;
+        ctx.font = "13px " + font;
+        ctx.fillText(label, x + w / 2, y + 24);
+        ctx.font = "bold 20px " + font;
+        ctx.fillText(value, x + w / 2, y + 50);
+      }
+
+      var xItem = pad, xEmp = 385, xEr = W - pad;
+      var y = pad;
+
+      // 제목
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 22px " + font;
+      ctx.fillText("4대보험 계산 결과", W / 2, y + 14);
+      y += 36;
+
+      // 부제(급여)
+      ctx.fillStyle = "#667085";
+      ctx.font = "14px " + font;
+      ctx.fillText("월 급여 " + withCommas(r.salary) + "원 기준 · 2026년", W / 2, y + 10);
+      y += 40;
+
+      // 표 머리글
+      ctx.font = "bold 13px " + font;
+      ctx.fillStyle = "#475467";
+      ctx.textAlign = "left";
+      ctx.fillText("항목", xItem, y + rowH / 2);
+      ctx.textAlign = "right";
+      ctx.fillText("근로자 부담", xEmp, y + rowH / 2);
+      ctx.fillText("회사 부담", xEr, y + rowH / 2);
+      y += rowH;
+      hline(y, "#eaecf0", 1);
+
+      // 5개 보험 항목
+      var it = r.items;
+      var rows = [
+        ["국민연금", it.pension], ["건강보험", it.health],
+        ["장기요양", it.longTerm], ["고용보험", it.employment],
+        ["산재보험", it.accident]
+      ];
+      ctx.font = "14px " + font;
+      for (var i = 0; i < rows.length; i++) {
+        var name = rows[i][0], v = rows[i][1];
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#344054";
+        ctx.fillText(name, xItem, y + rowH / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = v.employee === 0 ? "#bbbbbb" : "#344054";
+        ctx.fillText(withCommas(v.employee), xEmp, y + rowH / 2);
+        ctx.fillStyle = "#344054";
+        ctx.fillText(withCommas(v.employer), xEr, y + rowH / 2);
+        y += rowH;
+        hline(y, "#eaecf0", 1);
+      }
+
+      // 합계
+      hline(y, "#d0d5dd", 2);
+      ctx.font = "bold 14px " + font;
+      ctx.fillStyle = "#111827";
+      ctx.textAlign = "left";
+      ctx.fillText("합계", xItem, y + rowH / 2);
+      ctx.textAlign = "right";
+      ctx.fillText(withCommas(r.employeeTotal), xEmp, y + rowH / 2);
+      ctx.fillText(withCommas(r.employerTotal), xEr, y + rowH / 2);
+      y += rowH + 12;
+
+      // 연간 환산
+      ctx.font = "13px " + font;
+      ctx.fillStyle = "#667085";
+      ctx.textAlign = "left";
+      ctx.fillText(
+        "연간 환산 · 회사 총인건비 " + withCommas(r.totalLaborCost * 12) +
+        "원 / 근로자 4대보험 " + withCommas(r.employeeTotal * 12) + "원",
+        pad, y + 8);
+      y += 30;
+
+      // 강조 카드 2개
+      var cardW = (W - pad * 2 - 12) / 2, cardH = 72;
+      card(pad, y, cardW, cardH, "#ecfdf3", "#027a48",
+        "근로자 실수령액 (월)", withCommas(r.takeHome) + "원");
+      card(pad + cardW + 12, y, cardW, cardH, "#eff8ff", "#175cd3",
+        "회사 총인건비 (월)", withCommas(r.totalLaborCost) + "원");
+      y += cardH + 18;
+
+      // 안내 문구
+      ctx.font = "11px " + font;
+      ctx.fillStyle = "#98a2b3";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "※ 참고용 · 국민연금 상·하한선(40만/637만원) 적용 · 4대보험 계산기",
+        W / 2, y + 6);
+
+      // PNG로 내려받기
+      var link = document.createElement("a");
+      link.download = "4대보험_계산결과.png";
+      link.href = canvas.toDataURL("image/png");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
