@@ -184,28 +184,47 @@
     .settings-body {
       padding: 14px;
     }
-    .rate-row {
-      display: flex;
+    /* 요율 입력: 폭에 맞춰 자동으로 줄어드는 3열 그리드 */
+    .rate-grid {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 8px 10px;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .rate-head {
+      font-size: 12px;
+      color: #98a2b3;
+      text-align: right;
+    }
+    .rate-head:first-child {
+      text-align: left;
+    }
+    .rate-name {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.3;
       font-size: 13px;
-    }
-    .rate-row .rate-name {
-      flex: 0 0 92px;
       color: #344054;
+      padding-right: 4px;
     }
-    .rate-row input {
-      width: 78px;
-      padding: 6px 8px;
+    .rate-name small {
+      font-size: 11px;
+      font-weight: normal;
+      color: #98a2b3;
+    }
+    .rate-grid input {
+      width: 100%;
+      min-width: 0;           /* 좁은 화면에서 칸이 넘치지 않고 줄어들게 */
+      padding: 8px;
       border: 1px solid #d0d5dd;
       border-radius: 6px;
       text-align: right;
-      font-size: 13px;
+      font-size: 16px;        /* 모바일 포커스 시 자동 확대(줌) 방지 */
     }
-    .rate-row .pct {
-      color: #888;
-      flex: 0 0 auto;
+    .rate-grid input:disabled {
+      background-color: #f2f4f7;
+      color: #98a2b3;
     }
     .rate-hint {
       font-size: 12px;
@@ -234,6 +253,35 @@
       color: #98a2b3;
       line-height: 1.6;
     }
+
+    /* ===== 모바일 화면 최적화 (폭 480px 이하) ===== */
+    @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+      .container {
+        padding: 20px 16px;
+        border-radius: 10px;
+      }
+      h1 {
+        font-size: 21px;
+      }
+      .subtitle {
+        margin-bottom: 20px;
+      }
+      /* 표를 조금 촘촘하게 */
+      .result-table th,
+      .result-table td {
+        padding: 9px 6px;
+      }
+      .result-table th {
+        font-size: 12px;
+      }
+      /* 강조 카드는 세로로 쌓기 */
+      .card {
+        flex: 1 1 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -259,30 +307,31 @@
     <details class="settings" id="settings">
       <summary>보험요율 직접 수정 (회사 규모·업종별로 다름)</summary>
       <div class="settings-body">
-        <div class="rate-row">
+        <div class="rate-grid">
+          <!-- 머리글 -->
+          <span class="rate-head">항목</span>
+          <span class="rate-head">근로자 %</span>
+          <span class="rate-head">회사 %</span>
+
           <span class="rate-name">국민연금</span>
-          <input type="number" id="rate-pension-e" step="0.001" /><span class="pct">%</span>
-          <input type="number" id="rate-pension-c" step="0.001" /><span class="pct">% (근로자/회사)</span>
-        </div>
-        <div class="rate-row">
+          <input type="number" id="rate-pension-e" step="0.001" />
+          <input type="number" id="rate-pension-c" step="0.001" />
+
           <span class="rate-name">건강보험</span>
-          <input type="number" id="rate-health-e" step="0.001" /><span class="pct">%</span>
-          <input type="number" id="rate-health-c" step="0.001" /><span class="pct">% (근로자/회사)</span>
-        </div>
-        <div class="rate-row">
-          <span class="rate-name">장기요양</span>
-          <input type="number" id="rate-longterm-e" step="0.001" /><span class="pct">%</span>
-          <input type="number" id="rate-longterm-c" step="0.001" /><span class="pct">% (건강보험료 기준)</span>
-        </div>
-        <div class="rate-row">
+          <input type="number" id="rate-health-e" step="0.001" />
+          <input type="number" id="rate-health-c" step="0.001" />
+
+          <span class="rate-name">장기요양<small>건강보험료 기준</small></span>
+          <input type="number" id="rate-longterm-e" step="0.001" />
+          <input type="number" id="rate-longterm-c" step="0.001" />
+
           <span class="rate-name">고용보험</span>
-          <input type="number" id="rate-employment-e" step="0.001" /><span class="pct">%</span>
-          <input type="number" id="rate-employment-c" step="0.001" /><span class="pct">% (근로자/회사)</span>
-        </div>
-        <div class="rate-row">
-          <span class="rate-name">산재보험</span>
-          <input type="number" id="rate-accident-e" step="0.001" disabled /><span class="pct">%</span>
-          <input type="number" id="rate-accident-c" step="0.001" /><span class="pct">% (회사만 · 업종별)</span>
+          <input type="number" id="rate-employment-e" step="0.001" />
+          <input type="number" id="rate-employment-c" step="0.001" />
+
+          <span class="rate-name">산재보험<small>회사만·업종별</small></span>
+          <input type="number" id="rate-accident-e" step="0.001" disabled />
+          <input type="number" id="rate-accident-c" step="0.001" />
         </div>
         <p class="rate-hint">
           산재보험은 근로자 부담이 없습니다(0%). 회사 부담 요율은 업종에 따라 크게 다르므로
