@@ -129,8 +129,117 @@
   </div>
 
   <script>
-    // 2단계에서 여기에 계산 기능을 추가할 예정입니다.
-    console.log("4대보험 계산기 - 1단계 화면 뼈대 로드 완료");
+    // =====================================================
+    // 2026년 4대보험 요율 (근로자 / 회사)
+    // =====================================================
+    var RATES = {
+      // 국민연금: 근로자 4.5%, 회사 4.5%
+      pension:     { employee: 0.045,  employer: 0.045 },
+      // 건강보험: 근로자 3.545%, 회사 3.545%
+      health:      { employee: 0.03545, employer: 0.03545 },
+      // 장기요양: "건강보험료"를 기준으로 6.475%씩 (급여 기준이 아님에 주의)
+      longTerm:    { employee: 0.06475, employer: 0.06475 },
+      // 고용보험(실업급여): 근로자 0.9%, 회사 0.9%
+      employment:  { employee: 0.009,  employer: 0.009 },
+      // 산재보험: 회사만 부담 (업종 평균 약 0.7%)
+      accident:    { employee: 0,      employer: 0.007 }
+    };
+
+    // 국민연금 기준소득월액 상·하한선 (2025.7~2026.6 적용 기준)
+    var PENSION_MIN = 400000;    // 하한액
+    var PENSION_MAX = 6370000;   // 상한액
+
+    // =====================================================
+    // 숫자 → "3,000,000" 형태의 문자열
+    // =====================================================
+    function withCommas(number) {
+      return Math.round(number).toLocaleString("ko-KR");
+    }
+
+    // "3,000,000" 또는 "3000000" → 숫자 3000000
+    function parseMoney(text) {
+      var digits = String(text).replace(/[^0-9]/g, "");
+      return digits === "" ? 0 : parseInt(digits, 10);
+    }
+
+    // =====================================================
+    // 핵심: 급여를 받아 4대보험을 계산
+    // =====================================================
+    function calculate(salary) {
+      // 국민연금은 상·하한선을 적용한 "기준소득월액"으로 계산
+      var pensionBase = salary;
+      if (pensionBase < PENSION_MIN) pensionBase = PENSION_MIN;
+      if (pensionBase > PENSION_MAX) pensionBase = PENSION_MAX;
+
+      // 각 항목 계산 (원 단위, 10원 미만 절사는 4단계에서 다룸)
+      var pensionE = pensionBase * RATES.pension.employee;
+      var pensionC = pensionBase * RATES.pension.employer;
+
+      var healthE = salary * RATES.health.employee;
+      var healthC = salary * RATES.health.employer;
+
+      // 장기요양은 "건강보험료 × 요율" (급여가 아님)
+      var longTermE = healthE * RATES.longTerm.employee;
+      var longTermC = healthC * RATES.longTerm.employer;
+
+      var employmentE = salary * RATES.employment.employee;
+      var employmentC = salary * RATES.employment.employer;
+
+      var accidentE = salary * RATES.accident.employee; // 0원
+      var accidentC = salary * RATES.accident.employer;
+
+      var employeeTotal = pensionE + healthE + longTermE + employmentE + accidentE;
+      var employerTotal = pensionC + healthC + longTermC + employmentC + accidentC;
+
+      return {
+        salary: salary,
+        items: {
+          pension:    { employee: pensionE,    employer: pensionC },
+          health:     { employee: healthE,     employer: healthC },
+          longTerm:   { employee: longTermE,   employer: longTermC },
+          employment: { employee: employmentE, employer: employmentC },
+          accident:   { employee: accidentE,   employer: accidentC }
+        },
+        employeeTotal: employeeTotal,                 // 근로자 총 부담액
+        employerTotal: employerTotal,                 // 회사 총 부담액(보험료만)
+        takeHome: salary - employeeTotal,             // 근로자 실수령액(4대보험만 공제)
+        totalLaborCost: salary + employerTotal        // 회사 총인건비
+      };
+    }
+
+    // =====================================================
+    // 화면 요소 연결
+    // =====================================================
+    var salaryInput = document.getElementById("salary");
+    var calcButton  = document.getElementById("calcButton");
+    var resultArea  = document.getElementById("resultArea");
+
+    // 입력하는 동안 자동으로 천 단위 콤마 붙이기
+    salaryInput.addEventListener("input", function () {
+      var value = parseMoney(salaryInput.value);
+      salaryInput.value = value === 0 ? "" : withCommas(value);
+    });
+
+    // 계산하기 버튼 클릭
+    calcButton.addEventListener("click", function () {
+      var salary = parseMoney(salaryInput.value);
+
+      if (salary <= 0) {
+        resultArea.innerHTML = "먼저 월 급여를 입력해 주세요.";
+        return;
+      }
+
+      var result = calculate(salary);
+
+      // 2단계에서는 결과를 임시로 간단히 표시 (예쁜 표는 3단계에서)
+      resultArea.innerHTML =
+        "근로자 부담 합계: <b>" + withCommas(result.employeeTotal) + "원</b><br>" +
+        "회사 부담 합계: <b>" + withCommas(result.employerTotal) + "원</b><br>" +
+        "회사 총인건비: <b>" + withCommas(result.totalLaborCost) + "원</b>";
+
+      // 콘솔에도 상세 결과 출력 (검증용)
+      console.log("계산 결과:", result);
+    });
   </script>
 </body>
 </html>
