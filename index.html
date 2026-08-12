@@ -5,186 +5,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>4대보험 계산기 (2026년 기준)</title>
   <style>
-    /* ===== 기본 스타일 ===== */
-    * {
-      box-sizing: border-box;
-    }
+    /* ===== 기본 ===== */
+    * { box-sizing: border-box; }
     body {
-      font-family: "맑은 고딕", "Malgun Gothic", sans-serif;
-      background-color: #f0f2f5;
-      color: #222;
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+      color: #1e293b;
       margin: 0;
-      padding: 20px;
+      padding: 24px 16px;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #eef2ff 0%, #f6f3ff 45%, #fdf2ff 100%);
+      background-attachment: fixed;
     }
     .container {
       max-width: 640px;
       margin: 0 auto;
       background-color: #ffffff;
-      border-radius: 12px;
-      padding: 28px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
-    h1 {
-      font-size: 24px;
-      margin: 0 0 4px 0;
-      text-align: center;
-    }
-    .subtitle {
-      text-align: center;
-      color: #888;
-      font-size: 14px;
-      margin-bottom: 24px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
     }
 
-    /* ===== 입력 영역 ===== */
-    .input-group {
-      margin-bottom: 16px;
+    /* ===== 헤더(그라데이션) ===== */
+    .hero {
+      position: relative;
+      padding: 34px 28px 30px;
+      text-align: center;
+      color: #ffffff;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+      overflow: hidden;
     }
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -60px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      bottom: -70px; left: -30px;
+      width: 150px; height: 150px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+    }
+    .hero-badge {
+      position: relative;
+      width: 58px; height: 58px;
+      margin: 0 auto 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      backdrop-filter: blur(4px);
+    }
+    .hero h1 {
+      position: relative;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+    .hero .subtitle {
+      position: relative;
+      margin: 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    /* ===== 본문 ===== */
+    .body { padding: 26px 28px 30px; }
+
+    /* ===== 입력 ===== */
+    .input-group { margin-bottom: 16px; }
     label {
       display: block;
-      font-weight: bold;
+      font-weight: 700;
       margin-bottom: 8px;
-      font-size: 15px;
+      font-size: 14px;
+      color: #334155;
     }
     .money-input {
       display: flex;
       align-items: center;
-      border: 2px solid #d0d5dd;
-      border-radius: 8px;
-      padding: 0 12px;
-      transition: border-color 0.2s;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 0 14px;
+      background-color: #f8fafc;
+      transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
     }
     .money-input:focus-within {
-      border-color: #2563eb;
+      border-color: #6366f1;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
     }
     .money-input input {
       border: none;
       outline: none;
-      font-size: 18px;
-      padding: 12px 8px;
+      background: transparent;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+      padding: 13px 8px;
       width: 100%;
       text-align: right;
     }
     .money-input .unit {
-      color: #888;
+      color: #94a3b8;
       font-size: 15px;
+      font-weight: 600;
       white-space: nowrap;
     }
 
-    /* ===== 버튼 ===== */
+    /* ===== 계산 버튼 ===== */
     .calc-button {
       width: 100%;
-      background-color: #2563eb;
-      color: #fff;
       border: none;
-      border-radius: 8px;
-      padding: 14px;
+      border-radius: 14px;
+      padding: 15px;
+      margin-top: 6px;
       font-size: 17px;
-      font-weight: bold;
+      font-weight: 700;
+      color: #ffffff;
       cursor: pointer;
-      margin-top: 8px;
-      transition: background-color 0.2s;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+      transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
     }
     .calc-button:hover {
-      background-color: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(99, 102, 241, 0.42);
+      filter: brightness(1.03);
     }
+    .calc-button:active { transform: translateY(0); }
 
-    /* ===== 결과 영역 (뼈대) ===== */
-    .result-area {
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px dashed #d0d5dd;
-      color: #888;
-      text-align: center;
-      font-size: 15px;
-    }
-
-    /* ===== 결과 표 ===== */
-    .result-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-    .result-table th,
-    .result-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid #eaecf0;
-      text-align: right;
-    }
-    .result-table th {
-      background-color: #f8fafc;
-      color: #475467;
-      font-size: 13px;
-    }
-    .result-table th:first-child,
-    .result-table td:first-child {
-      text-align: left;
-      color: #344054;
-    }
-    .result-table .total-row td {
-      font-weight: bold;
-      border-top: 2px solid #d0d5dd;
-      border-bottom: none;
-      background-color: #f8fafc;
-    }
-    .result-table .zero {
-      color: #bbb;
-    }
-
-    /* ===== 강조 카드 ===== */
-    .cards {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .card {
-      flex: 1 1 0;
-      min-width: 150px;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-    }
-    .card .card-label {
-      font-size: 13px;
-      margin-bottom: 6px;
-    }
-    .card .card-value {
-      font-size: 20px;
-      font-weight: bold;
-    }
-    .card.take-home {
-      background-color: #ecfdf3;
-      color: #027a48;
-    }
-    .card.labor-cost {
-      background-color: #eff8ff;
-      color: #175cd3;
-    }
-
-    /* ===== 요율 설정 패널 (접기/펼치기) ===== */
+    /* ===== 요율 설정 패널 ===== */
     .settings {
-      margin-top: 16px;
-      border: 1px solid #eaecf0;
-      border-radius: 8px;
+      margin-top: 14px;
+      border: 1px solid #eef0f6;
+      border-radius: 14px;
       overflow: hidden;
     }
     .settings summary {
       cursor: pointer;
-      padding: 12px 14px;
+      padding: 13px 15px;
       font-size: 14px;
-      font-weight: bold;
-      color: #475467;
+      font-weight: 700;
+      color: #475569;
       background-color: #f8fafc;
       list-style: none;
     }
     .settings summary::-webkit-details-marker { display: none; }
     .settings summary::before { content: "⚙️ "; }
-    .settings[open] summary::before { content: "⚙️ "; }
-    .settings-body {
-      padding: 14px;
-    }
-    /* 요율 입력: 폭에 맞춰 자동으로 줄어드는 3열 그리드 */
+    .settings-body { padding: 16px 15px; }
+
     .rate-grid {
       display: grid;
       grid-template-columns: auto 1fr 1fr;
@@ -194,137 +171,219 @@
     }
     .rate-head {
       font-size: 12px;
-      color: #98a2b3;
+      color: #94a3b8;
+      font-weight: 600;
       text-align: right;
     }
-    .rate-head:first-child {
-      text-align: left;
-    }
+    .rate-head:first-child { text-align: left; }
     .rate-name {
       display: flex;
       flex-direction: column;
       line-height: 1.3;
       font-size: 13px;
-      color: #344054;
+      font-weight: 600;
+      color: #334155;
       padding-right: 4px;
     }
     .rate-name small {
       font-size: 11px;
-      font-weight: normal;
-      color: #98a2b3;
+      font-weight: 400;
+      color: #94a3b8;
     }
     .rate-grid input {
       width: 100%;
-      min-width: 0;           /* 좁은 화면에서 칸이 넘치지 않고 줄어들게 */
+      min-width: 0;
       padding: 8px;
-      border: 1px solid #d0d5dd;
-      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
       text-align: right;
-      font-size: 16px;        /* 모바일 포커스 시 자동 확대(줌) 방지 */
+      font-size: 16px;
+      color: #1e293b;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .rate-grid input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
     }
     .rate-grid input:disabled {
-      background-color: #f2f4f7;
-      color: #98a2b3;
+      background-color: #f1f5f9;
+      color: #94a3b8;
     }
     .rate-hint {
       font-size: 12px;
-      color: #98a2b3;
-      margin: 2px 0 12px 0;
+      color: #94a3b8;
+      margin: 2px 0 14px 0;
+      line-height: 1.6;
     }
     .reset-rates {
       background: none;
-      border: 1px solid #d0d5dd;
-      border-radius: 6px;
-      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 7px 14px;
       font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      color: #475467;
+      color: #475569;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .reset-rates:hover {
+      background-color: #f8fafc;
+      border-color: #c7d2fe;
     }
 
-    /* ===== 연간 환산 / 안내 ===== */
+    /* ===== 결과 영역 ===== */
+    .result-area {
+      margin-top: 24px;
+      padding-top: 22px;
+      border-top: 1px dashed #e2e8f0;
+      color: #94a3b8;
+      text-align: center;
+      font-size: 15px;
+    }
+    .result-salary {
+      display: inline-block;
+      background-color: #eef2ff;
+      color: #4f46e5;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin: 0 0 16px 0;
+    }
+
+    /* ===== 결과 표 ===== */
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+    .result-table th,
+    .result-table td {
+      padding: 11px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: right;
+    }
+    .result-table th {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .result-table th:first-child,
+    .result-table td:first-child {
+      text-align: left;
+      color: #334155;
+      font-weight: 600;
+    }
+    .result-table .total-row td {
+      font-weight: 800;
+      color: #4338ca;
+      border-top: 2px solid #ddd6fe;
+      border-bottom: none;
+      background-color: #f5f3ff;
+    }
+    .result-table .zero { color: #cbd5e1; }
+
+    /* ===== 연간 환산 ===== */
     .annual-note {
       font-size: 13px;
-      color: #667085;
-      margin-bottom: 12px;
-    }
-    .disclaimer {
-      margin-top: 18px;
-      font-size: 12px;
-      color: #98a2b3;
-      line-height: 1.6;
-    }
-
-    /* 결과 위에 표시되는 급여 요약 줄 */
-    .result-salary {
-      font-size: 14px;
-      color: #475467;
+      color: #64748b;
+      background-color: #f8fafc;
+      border-radius: 10px;
+      padding: 10px 12px;
       margin: 0 0 14px 0;
     }
+    .annual-note b { color: #475569; }
 
-    /* ===== 결과 하단 인쇄/저장 버튼 ===== */
-    .result-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
+    /* ===== 강조 카드 ===== */
+    .cards { display: flex; gap: 12px; flex-wrap: wrap; }
+    .card {
+      flex: 1 1 0;
+      min-width: 150px;
+      border-radius: 16px;
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
     }
+    .card .card-label { font-size: 13px; font-weight: 600; margin-bottom: 6px; opacity: 0.9; }
+    .card .card-value { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+    .card.take-home {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      color: #047857;
+    }
+    .card.labor-cost {
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+      color: #4338ca;
+    }
+
+    /* ===== 인쇄 / 저장 버튼 ===== */
+    .result-actions { display: flex; gap: 10px; margin-top: 18px; }
     .result-actions button {
       flex: 1;
-      padding: 11px;
-      border: 1px solid #d0d5dd;
-      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
       background-color: #fff;
-      color: #344054;
+      color: #334155;
       font-size: 14px;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s, transform 0.12s;
     }
     .result-actions button:hover {
       background-color: #f8fafc;
+      border-color: #c7d2fe;
+      transform: translateY(-1px);
     }
 
-    /* ===== 인쇄 화면 (입력/설정/버튼은 숨기고 결과만) ===== */
+    /* ===== 면책 ===== */
+    .disclaimer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.7;
+    }
+
+    /* ===== 인쇄 화면 ===== */
     @media print {
-      body { background-color: #fff; padding: 0; }
-      .container { box-shadow: none; max-width: 100%; border-radius: 0; padding: 0; }
-      .subtitle, .input-group, .settings, .calc-button, .result-actions { display: none !important; }
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; border-radius: 0; max-width: 100%; }
+      .hero {
+        background: #fff !important;
+        color: #111 !important;
+        padding: 0 0 10px;
+      }
+      .hero::before, .hero::after, .hero-badge { display: none !important; }
+      .hero h1 { color: #111827; }
+      .hero .subtitle, .input-group, .settings, .calc-button, .result-actions {
+        display: none !important;
+      }
       .result-area { margin-top: 0; padding-top: 0; border-top: none; }
     }
 
-    /* ===== 모바일 화면 최적화 (폭 480px 이하) ===== */
+    /* ===== 모바일 (480px 이하) ===== */
     @media (max-width: 480px) {
-      body {
-        padding: 12px;
-      }
-      .container {
-        padding: 20px 16px;
-        border-radius: 10px;
-      }
-      h1 {
-        font-size: 21px;
-      }
-      .subtitle {
-        margin-bottom: 20px;
-      }
-      /* 표를 조금 촘촘하게 */
-      .result-table th,
-      .result-table td {
-        padding: 9px 6px;
-      }
-      .result-table th {
-        font-size: 12px;
-      }
-      /* 강조 카드는 세로로 쌓기 */
-      .card {
-        flex: 1 1 100%;
-      }
+      body { padding: 14px 10px; }
+      .container { border-radius: 20px; }
+      .hero { padding: 28px 20px 24px; }
+      .hero h1 { font-size: 22px; }
+      .body { padding: 22px 16px 26px; }
+      .result-table th, .result-table td { padding: 10px 6px; }
+      .result-table th { font-size: 11px; }
+      .card { flex: 1 1 100%; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>4대보험 계산기</h1>
-    <p class="subtitle">2026년 기준 · 근로자/회사 부담 및 총인건비 계산</p>
+    <header class="hero">
+      <div class="hero-badge">🧮</div>
+      <h1>4대보험 계산기</h1>
+      <p class="subtitle">2026년 기준 · 근로자 / 회사 부담 및 총인건비</p>
+    </header>
 
+    <div class="body">
     <!-- 급여 입력 -->
     <div class="input-group">
       <label for="salary">월 급여 (세전)</label>
@@ -397,6 +456,7 @@
       원 단위 절사 방식 등에 따라 달라질 수 있습니다.
       국민연금은 기준소득월액 상·하한선(하한 40만원 / 상한 637만원)을 적용합니다.
     </p>
+    </div><!-- .body -->
   </div>
 
   <script>
@@ -562,7 +622,7 @@
       var salary = parseMoney(salaryInput.value);
 
       if (salary <= 0) {
-        resultArea.style.color = "#888";
+        resultArea.style.color = "#94a3b8";
         resultArea.style.textAlign = "center";
         resultArea.innerHTML = "먼저 월 급여를 입력해 주세요.";
         resultActions.style.display = "none";   // 결과 없으면 버튼 숨김
@@ -635,7 +695,7 @@
         "</div>";
 
       // 결과 영역은 기본 회색/가운데정렬이므로, 표를 위해 스타일 초기화
-      resultArea.style.color = "#222";
+      resultArea.style.color = "#1e293b";
       resultArea.style.textAlign = "left";
       resultArea.innerHTML = html;
     }
