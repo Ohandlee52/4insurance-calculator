@@ -98,6 +98,69 @@
       text-align: center;
       font-size: 15px;
     }
+
+    /* ===== 결과 표 ===== */
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .result-table th,
+    .result-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eaecf0;
+      text-align: right;
+    }
+    .result-table th {
+      background-color: #f8fafc;
+      color: #475467;
+      font-size: 13px;
+    }
+    .result-table th:first-child,
+    .result-table td:first-child {
+      text-align: left;
+      color: #344054;
+    }
+    .result-table .total-row td {
+      font-weight: bold;
+      border-top: 2px solid #d0d5dd;
+      border-bottom: none;
+      background-color: #f8fafc;
+    }
+    .result-table .zero {
+      color: #bbb;
+    }
+
+    /* ===== 강조 카드 ===== */
+    .cards {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .card {
+      flex: 1 1 0;
+      min-width: 150px;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .card .card-label {
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .card .card-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .card.take-home {
+      background-color: #ecfdf3;
+      color: #027a48;
+    }
+    .card.labor-cost {
+      background-color: #eff8ff;
+      color: #175cd3;
+    }
   </style>
 </head>
 <body>
@@ -230,16 +293,66 @@
       }
 
       var result = calculate(salary);
-
-      // 2단계에서는 결과를 임시로 간단히 표시 (예쁜 표는 3단계에서)
-      resultArea.innerHTML =
-        "근로자 부담 합계: <b>" + withCommas(result.employeeTotal) + "원</b><br>" +
-        "회사 부담 합계: <b>" + withCommas(result.employerTotal) + "원</b><br>" +
-        "회사 총인건비: <b>" + withCommas(result.totalLaborCost) + "원</b>";
+      renderResult(result);
 
       // 콘솔에도 상세 결과 출력 (검증용)
       console.log("계산 결과:", result);
     });
+
+    // =====================================================
+    // 결과를 표 + 강조 카드로 그리기
+    // =====================================================
+    function renderResult(result) {
+      var it = result.items;
+
+      // 각 보험 항목을 표의 한 행으로 만드는 도우미
+      function row(name, e, c) {
+        var eCell = e === 0
+          ? '<td class="zero">0</td>'
+          : "<td>" + withCommas(e) + "</td>";
+        return "<tr>" +
+          "<td>" + name + "</td>" +
+          eCell +
+          "<td>" + withCommas(c) + "</td>" +
+          "</tr>";
+      }
+
+      var html =
+        '<table class="result-table">' +
+          "<thead><tr>" +
+            "<th>항목</th><th>근로자 부담</th><th>회사 부담</th>" +
+          "</tr></thead>" +
+          "<tbody>" +
+            row("국민연금", it.pension.employee, it.pension.employer) +
+            row("건강보험", it.health.employee, it.health.employer) +
+            row("장기요양", it.longTerm.employee, it.longTerm.employer) +
+            row("고용보험", it.employment.employee, it.employment.employer) +
+            row("산재보험", it.accident.employee, it.accident.employer) +
+          "</tbody>" +
+          "<tfoot>" +
+            '<tr class="total-row">' +
+              "<td>합계</td>" +
+              "<td>" + withCommas(result.employeeTotal) + "</td>" +
+              "<td>" + withCommas(result.employerTotal) + "</td>" +
+            "</tr>" +
+          "</tfoot>" +
+        "</table>" +
+        '<div class="cards">' +
+          '<div class="card take-home">' +
+            '<div class="card-label">근로자 실수령액</div>' +
+            '<div class="card-value">' + withCommas(result.takeHome) + "원</div>" +
+          "</div>" +
+          '<div class="card labor-cost">' +
+            '<div class="card-label">회사 총인건비</div>' +
+            '<div class="card-value">' + withCommas(result.totalLaborCost) + "원</div>" +
+          "</div>" +
+        "</div>";
+
+      // 결과 영역은 기본 회색/가운데정렬이므로, 표를 위해 스타일 초기화
+      resultArea.style.color = "#222";
+      resultArea.style.textAlign = "left";
+      resultArea.innerHTML = html;
+    }
   </script>
 </body>
 </html>
