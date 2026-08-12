@@ -161,6 +161,79 @@
       background-color: #eff8ff;
       color: #175cd3;
     }
+
+    /* ===== 요율 설정 패널 (접기/펼치기) ===== */
+    .settings {
+      margin-top: 16px;
+      border: 1px solid #eaecf0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .settings summary {
+      cursor: pointer;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #475467;
+      background-color: #f8fafc;
+      list-style: none;
+    }
+    .settings summary::-webkit-details-marker { display: none; }
+    .settings summary::before { content: "⚙️ "; }
+    .settings[open] summary::before { content: "⚙️ "; }
+    .settings-body {
+      padding: 14px;
+    }
+    .rate-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .rate-row .rate-name {
+      flex: 0 0 92px;
+      color: #344054;
+    }
+    .rate-row input {
+      width: 78px;
+      padding: 6px 8px;
+      border: 1px solid #d0d5dd;
+      border-radius: 6px;
+      text-align: right;
+      font-size: 13px;
+    }
+    .rate-row .pct {
+      color: #888;
+      flex: 0 0 auto;
+    }
+    .rate-hint {
+      font-size: 12px;
+      color: #98a2b3;
+      margin: 2px 0 12px 0;
+    }
+    .reset-rates {
+      background: none;
+      border: 1px solid #d0d5dd;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #475467;
+    }
+
+    /* ===== 연간 환산 / 안내 ===== */
+    .annual-note {
+      font-size: 13px;
+      color: #667085;
+      margin-bottom: 12px;
+    }
+    .disclaimer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #98a2b3;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -182,6 +255,43 @@
       </div>
     </div>
 
+    <!-- 요율 설정 패널 (회사 규모·업종에 따라 조정 가능) -->
+    <details class="settings" id="settings">
+      <summary>보험요율 직접 수정 (회사 규모·업종별로 다름)</summary>
+      <div class="settings-body">
+        <div class="rate-row">
+          <span class="rate-name">국민연금</span>
+          <input type="number" id="rate-pension-e" step="0.001" /><span class="pct">%</span>
+          <input type="number" id="rate-pension-c" step="0.001" /><span class="pct">% (근로자/회사)</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-name">건강보험</span>
+          <input type="number" id="rate-health-e" step="0.001" /><span class="pct">%</span>
+          <input type="number" id="rate-health-c" step="0.001" /><span class="pct">% (근로자/회사)</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-name">장기요양</span>
+          <input type="number" id="rate-longterm-e" step="0.001" /><span class="pct">%</span>
+          <input type="number" id="rate-longterm-c" step="0.001" /><span class="pct">% (건강보험료 기준)</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-name">고용보험</span>
+          <input type="number" id="rate-employment-e" step="0.001" /><span class="pct">%</span>
+          <input type="number" id="rate-employment-c" step="0.001" /><span class="pct">% (근로자/회사)</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-name">산재보험</span>
+          <input type="number" id="rate-accident-e" step="0.001" disabled /><span class="pct">%</span>
+          <input type="number" id="rate-accident-c" step="0.001" /><span class="pct">% (회사만 · 업종별)</span>
+        </div>
+        <p class="rate-hint">
+          산재보험은 근로자 부담이 없습니다(0%). 회사 부담 요율은 업종에 따라 크게 다르므로
+          실제 사업장 요율로 바꿔서 계산하세요.
+        </p>
+        <button class="reset-rates" id="resetRates">기본값(2026년)으로 되돌리기</button>
+      </div>
+    </details>
+
     <!-- 계산 버튼 -->
     <button class="calc-button" id="calcButton">계산하기</button>
 
@@ -189,13 +299,20 @@
     <div class="result-area" id="resultArea">
       급여를 입력하고 <b>계산하기</b> 버튼을 눌러주세요.
     </div>
+
+    <!-- 면책 안내 -->
+    <p class="disclaimer">
+      ※ 이 계산기는 참고용입니다. 실제 보험료는 사업장 규모·업종, 요율 개정,
+      원 단위 절사 방식 등에 따라 달라질 수 있습니다.
+      국민연금은 기준소득월액 상·하한선(하한 40만원 / 상한 637만원)을 적용합니다.
+    </p>
   </div>
 
   <script>
     // =====================================================
-    // 2026년 4대보험 요율 (근로자 / 회사)
+    // 2026년 4대보험 기본 요율 (근로자 / 회사)
     // =====================================================
-    var RATES = {
+    var DEFAULT_RATES = {
       // 국민연금: 근로자 4.5%, 회사 4.5%
       pension:     { employee: 0.045,  employer: 0.045 },
       // 건강보험: 근로자 3.545%, 회사 3.545%
@@ -206,6 +323,15 @@
       employment:  { employee: 0.009,  employer: 0.009 },
       // 산재보험: 회사만 부담 (업종 평균 약 0.7%)
       accident:    { employee: 0,      employer: 0.007 }
+    };
+
+    // 실제 계산에 쓰는 요율 (요율 패널에서 수정하면 이 값이 바뀜)
+    var RATES = {
+      pension:    { employee: 0, employer: 0 },
+      health:     { employee: 0, employer: 0 },
+      longTerm:   { employee: 0, employer: 0 },
+      employment: { employee: 0, employer: 0 },
+      accident:   { employee: 0, employer: 0 }
     };
 
     // 국민연금 기준소득월액 상·하한선 (2025.7~2026.6 적용 기준)
@@ -276,6 +402,45 @@
     var salaryInput = document.getElementById("salary");
     var calcButton  = document.getElementById("calcButton");
     var resultArea  = document.getElementById("resultArea");
+    var resetButton = document.getElementById("resetRates");
+
+    // 요율 입력칸 id 매핑 (RATES 키 → input id 접두사)
+    var RATE_IDS = {
+      pension: "pension", health: "health", longTerm: "longterm",
+      employment: "employment", accident: "accident"
+    };
+
+    // RATES(소수) → 요율 입력칸(%)에 채우기
+    function fillRateInputs(source) {
+      for (var key in RATE_IDS) {
+        var idBase = RATE_IDS[key];
+        document.getElementById("rate-" + idBase + "-e").value =
+          +(source[key].employee * 100).toFixed(3);
+        document.getElementById("rate-" + idBase + "-c").value =
+          +(source[key].employer * 100).toFixed(3);
+      }
+    }
+
+    // 요율 입력칸(%) → RATES(소수)로 읽어오기
+    function readRateInputs() {
+      for (var key in RATE_IDS) {
+        var idBase = RATE_IDS[key];
+        var e = parseFloat(document.getElementById("rate-" + idBase + "-e").value);
+        var c = parseFloat(document.getElementById("rate-" + idBase + "-c").value);
+        RATES[key].employee = isNaN(e) ? 0 : e / 100;
+        RATES[key].employer = isNaN(c) ? 0 : c / 100;
+      }
+    }
+
+    // 시작할 때 기본 요율을 입력칸과 RATES에 반영
+    fillRateInputs(DEFAULT_RATES);
+    readRateInputs();
+
+    // 기본값으로 되돌리기
+    resetButton.addEventListener("click", function () {
+      fillRateInputs(DEFAULT_RATES);
+      readRateInputs();
+    });
 
     // 입력하는 동안 자동으로 천 단위 콤마 붙이기
     salaryInput.addEventListener("input", function () {
@@ -283,21 +448,32 @@
       salaryInput.value = value === 0 ? "" : withCommas(value);
     });
 
+    // Enter 키로도 계산되게
+    salaryInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") runCalculation();
+    });
+
     // 계산하기 버튼 클릭
-    calcButton.addEventListener("click", function () {
+    calcButton.addEventListener("click", runCalculation);
+
+    // 실제 계산 실행
+    function runCalculation() {
       var salary = parseMoney(salaryInput.value);
 
       if (salary <= 0) {
+        resultArea.style.color = "#888";
+        resultArea.style.textAlign = "center";
         resultArea.innerHTML = "먼저 월 급여를 입력해 주세요.";
         return;
       }
 
+      readRateInputs();               // 요율 패널의 최신 값 반영
       var result = calculate(salary);
       renderResult(result);
 
       // 콘솔에도 상세 결과 출력 (검증용)
       console.log("계산 결과:", result);
-    });
+    }
 
     // =====================================================
     // 결과를 표 + 강조 카드로 그리기
@@ -337,13 +513,16 @@
             "</tr>" +
           "</tfoot>" +
         "</table>" +
+        '<p class="annual-note">연간 환산 · 회사 총인건비 <b>' +
+          withCommas(result.totalLaborCost * 12) + "원</b> / " +
+          "근로자 4대보험 <b>" + withCommas(result.employeeTotal * 12) + "원</b></p>" +
         '<div class="cards">' +
           '<div class="card take-home">' +
-            '<div class="card-label">근로자 실수령액</div>' +
+            '<div class="card-label">근로자 실수령액 (월)</div>' +
             '<div class="card-value">' + withCommas(result.takeHome) + "원</div>" +
           "</div>" +
           '<div class="card labor-cost">' +
-            '<div class="card-label">회사 총인건비</div>' +
+            '<div class="card-label">회사 총인건비 (월)</div>' +
             '<div class="card-value">' + withCommas(result.totalLaborCost) + "원</div>" +
           "</div>" +
         "</div>";
